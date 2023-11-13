@@ -48,19 +48,30 @@ app.get("/all", async (req, res) => {
 // GET method route
 //SELECCIONAR POR Query 
 app.get ("/user", async (req, res) => {
-    try {
+
         var query = req.query;
 
         const usersCollection = getDb().db("mock-collection").collection("users");
-        const byQuery = await usersCollection.findOne(query);
+        await usersCollection.findOne(
+            query,
+            (err, data) =>{
+                if (data) {
+                    res.status(200).json({
+                      text: "user found",
+                      data: data,
+                    });
+                } else {
+                      res.status(404).json({
+                        text: "user not found",
+                        error: err,
+                      });
+                    }
 
-        res.send(byQuery);
-        console.log(query)   
-    } catch (error) {
-        console.error("No se pudo seleccionar: ", error.message);
-    }
-    
-})
+                }
+            );
+});
+        
+
 //Seleccionr por email
 app.get("/email", async function (req, res) {
   
@@ -86,7 +97,7 @@ app.get("/email", async function (req, res) {
 
 
 //Patch method
-//Editar los parámetros de un usuario segun su ID (determinar el ID como Parámetro -> Path Variables -> id )(Definir nuevos valores en Body)
+//Editar los parámetros de un usuario segun su email 
 
 app.patch("/email", async (req, res) => {
   var newObject = req.body;
@@ -145,7 +156,7 @@ app.put("/email", async (req, res) => {
   }
 });
 
-//AYUDA! PUT opción 2 : Si crea o actualiza los usuarios pero no carga else {} cuando un nuevo usuario es creado. Porque en ese punto el doc ya tiene datos. ¿Como arreglo?
+//AYUDA! PUT opción 2 : Sí crea o actualiza los usuarios pero no carga else {} cuando un nuevo usuario es creado. Porque en ese punto el doc ya tiene datos. ¿Se puede arreglar?
 app.put("/email2", async (req, res) => {
   try {
     //identifica al usuario. Actualiza los campos, crea nuevos o crea un usuario nuevo
@@ -176,27 +187,6 @@ app.put("/email2", async (req, res) => {
 });
     
 
-   /* //Usuario nuevo:
-    if (result.matchedCount === 0) {
-      const nuevoID = result.upsertedId;
-      const byID = await usersCollection.findOne({
-        _id: ObjectId(nuevoID),
-      });
-      res.status(201).json({
-        message: `Nuevo usuario registrado ${nuevoID}`,
-        byID,
-      });
-    } else {
-      //Usuario actualizado
-      const byFilter = await usersCollection.findOne(filter);
-      res.status(200).json({ message: "Usuario actualizado", byFilter });
-    }
-  } catch (error) {
-    console.error("Falla en la matrix ", error.message);
-  }
-});
-
-
 /* DELETE method. Modifying the message based on certain field(s).
 If not found, do nothing. (204 No Content)
 If found, document deleted (200 OK) */
@@ -209,13 +199,13 @@ app.delete("/email", async (req, res) => {
     if (data) {
             usersCollection.deleteOne(filter).then((data) => {
             res.status(200).json({
-            text: "user DELETED successfully",
+            text: "usuario ELIMINADO",
             data: data
         })
         });
     } else {
-      res.status(404).json({
-        text: "user not found",
+      res.status(204).json({
+        text: "No se encontró al usuario",
         error: err,
       });
     }
